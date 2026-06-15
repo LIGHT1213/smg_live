@@ -1,0 +1,7 @@
+interface:
+  display_name: "五星体育直播"
+  short_description: "启动/停止局域网直播中转"
+  default_prompt: "用 $smg-live-relay 启动五星体育直播中转服务,并把播放地址告诉我。"
+
+policy:
+  allow_implicit_invocation: true
