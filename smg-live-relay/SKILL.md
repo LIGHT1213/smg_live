@@ -25,7 +25,7 @@ description: Start, stop, or check status of the local SMGTV/五星体育 live-s
 
 ```bash
 # 方式A:直接用仓库里的脚本 (克隆后立即可用)
-bash skill/scripts/manage.sh start
+bash smg-live-relay/scripts/manage.sh start
 
 # 方式B:已安装到 ~/.codex/skills/smg-live-relay/ 时
 bash ~/.codex/skills/smg-live-relay/scripts/manage.sh start
@@ -56,17 +56,31 @@ bash ~/.codex/skills/smg-live-relay/scripts/manage.sh start
 
 默认是五星体育 (`kankanews.com/huikan?id=10`)。换频道用环境变量:
 ```
-TARGET_URL='https://live.kankanews.com/huikan?id=8' bash skill/scripts/manage.sh restart
+TARGET_URL='https://live.kankanews.com/huikan?id=8' bash smg-live-relay/scripts/manage.sh restart
 ```
 常见 id:10=五星体育,8=上视新闻,具体以 kankanews 实际页面为准。
 
-## 安装到 Codex(可选)
+## 安装
 
-要让 Codex 自动识别这个 skill,把它放进 Codex 的 skills 目录:
+### 方式一:用 Codex 官方 skill-installer(推荐)
+
+在 Codex 里直接说 "安装 smg-live-relay skill",或运行:
+
 ```bash
-cp -R skill/ ~/.codex/skills/smg-live-relay/
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
 ```
-之后对 Codex 说"开五星体育直播"即可触发。
+
+装完后**重启 Codex**,对它说"开五星体育直播"即可触发。
+
+### 方式二:手动复制(已克隆本仓库)
+
+```bash
+cp -R smg-live-relay/ ~/.codex/skills/smg-live-relay/
+```
+
+> 注意:安装后需确认 relay 服务代码在 skill 能找到的位置。
+> 默认查找顺序:环境变量 `RELAY_DIR` → 仓库结构 → fallback。
+> 本机默认 fallback 路径在 manage.sh 顶部 `RELAY_DIR_FALLBACK`,按需修改。
 
 ## 外网访问(可选,仅在用户明确要求时提供)
 
