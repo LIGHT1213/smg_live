@@ -29,5 +29,50 @@
 *   如果你**习惯使用Firefox桌面版**，或者看重**开源生态**，那么**Firefox for Android** 会很适合你。
 *   **X浏览器**则以其**轻量级、无广告**的特点，并支持油猴脚本，吸引了部分用户。
 
+# 局域网 HLS 转发 (relay)
 
+除了浏览器插件,还可以把直播流推送到局域网,让任意设备(VLC/IINA/电视/手机)直接播放。
 
+```
+kankanews 网页
+  └─ Puppeteer (headless Chrome, 注入解锁脚本)
+     └─ 浏览器充当反向代理,中转 HLS 流
+        └─ 本地 HTTP 服务 (0.0.0.0:8080)
+           └─ 局域网内 VLC 打开 http://<本机IP>:8080/live.m3u8
+```
+
+> 火山引擎 CDN 做了 TLS 指纹校验,ffmpeg/curl 直拉全 403,所以用浏览器中转。
+
+## 安装到 Codex (推荐)
+
+在 Codex 里安装 `smg-live-relay` skill,之后说一句"开五星体育直播"即可启动:
+
+```bash
+HTTPS_PROXY=http://<代理> ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
+```
+
+安装后**重启 Codex**,说"开五星体育直播"即可。首次启动自动下载依赖和 Chromium(约 1-2 分钟)。
+
+## 手动运行
+
+```bash
+cd relay && npm install && npm start
+```
+
+详细说明见 [USAGE.md](USAGE.md) 和 [relay/README.md](relay/README.md)。
+
+# 文件结构
+
+```
+smg_live/
+├── smg_fivestar.user.js   # 原始油猴脚本
+├── relay/                 # 局域网 HLS 转发服务
+│   ├── server.js
+│   └── package.json
+├── smg-live-relay/        # Codex skill (自包含 relay)
+│   ├── SKILL.md
+│   ├── scripts/manage.sh
+│   └── relay/
+├── AGENTS.md              # 贡献者指南
+└── USAGE.md               # relay 使用说明
+```
