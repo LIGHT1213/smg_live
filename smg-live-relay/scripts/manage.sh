@@ -13,6 +13,10 @@ PID_FILE="$RELAY_DIR/.relay.pid"
 LOG_FILE="$RELAY_DIR/.relay.log"
 PORT="${2:-8080}"
 
+# 代理仅用于安装阶段 (npm install + Chromium 下载);运行时拉流不走代理。
+# 用户可用 INSTALL_PROXY 环境变量覆盖,或设为空禁用。
+INSTALL_PROXY="${INSTALL_PROXY:-http://192.168.31.216:1081}"
+
 _is_running() {
   [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null
 }
@@ -45,7 +49,7 @@ case "${1:-}" in
       exit 1
     fi
     cd "$RELAY_DIR"
-    [ -d node_modules ] || { echo "首次运行,正在安装依赖 (puppeteer + Chromium,约 150MB)..."; npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }; }
+    [ -d node_modules ] || { echo "首次运行,正在安装依赖 (puppeteer + Chromium,约 150MB)..."; HTTP_PROXY="$INSTALL_PROXY" HTTPS_PROXY="$INSTALL_PROXY" npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }; }
     env -u HTTP_PROXY -u HTTPS_PROXY PORT="$PORT" nohup node server.js > "$LOG_FILE" 2>&1 &
     echo $! > "$PID_FILE"
     echo "启动中 (PID $(cat "$PID_FILE")),等待抓流..."

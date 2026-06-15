@@ -66,7 +66,7 @@ TARGET_URL='https://live.kankanews.com/huikan?id=8' \
 在 Codex 里说 "安装 smg-live-relay skill",或运行:
 
 ```bash
-python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
+HTTPS_PROXY=http://<代理> python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
 ```
 
 装完后**重启 Codex**,对它说"开五星体育直播"即可触发。
@@ -83,7 +83,10 @@ cp -R smg-live-relay/ ~/.codex/skills/smg-live-relay/
 
 - macOS(Apple Silicon 或 Intel)
 - Node.js ≥ 18
-- 不需要 ffmpeg、不需要代理(kankanews 是国内 CDN,直连)
+- 不需要 ffmpeg
+- **首次安装需要代理**(从 GitHub 拉 skill、npm 装 puppeteer + Chromium);
+  之后运行不需要代理(kankanews 是国内 CDN,直连)。代理地址用环境变量
+  `INSTALL_PROXY` 指定(默认 http://192.168.31.216:1081,按需修改或置空)
 
 ## 外网访问(可选,仅在用户明确要求时提供)
 
@@ -95,6 +98,6 @@ relay 默认只在局域网内可用。要在家庭网络之外观看,推荐用 
 ## 不要做的事
 
 - 不要修改 skill 内 relay/server.js(已验证可用)
-- 不要在启动时设 HTTP_PROXY(国内 CDN 直连,加代理会失败)
+- 不要在**运行时**(node server.js)设 HTTP_PROXY:国内 CDN 直连,加代理会 403。代理仅用于安装阶段,见 INSTALL_PROXY。
 - 不要试图用 ffmpeg 直拉 CDN(TLS 指纹校验,必 403)
 - 不要承诺自动重连或 7×24 稳定(直播 token 会过期,断了需手动 restart)
