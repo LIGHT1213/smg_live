@@ -61,23 +61,21 @@ TARGET_URL='https://live.kankanews.com/huikan?id=8' \
 
 ## 安装
 
-### 方式一:用 Codex 官方 skill-installer(推荐)
-
-在 Codex 里说 "安装 smg-live-relay skill",或运行:
+### 一句话安装(推荐)
 
 ```bash
-HTTPS_PROXY=http://<代理> python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
+HTTPS_PROXY=http://<你的代理> ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
 ```
 
-装完后**重启 Codex**,对它说"开五星体育直播"即可触发。
+装完后**重启 Codex**,对它说"开五星体育直播"即可。首次启动会自动
+用  走代理下载 npm 包(约 10s)和 Chromium(约 150MB,1-2 分钟),
+之后启动约 5 秒。relay 服务代码随 skill 一起分发,无需额外 clone 仓库。
 
-### 方式二:手动复制(已克隆本仓库)
+### 手动安装(已克隆本仓库时)
 
 ```bash
 cp -R smg-live-relay/ ~/.codex/skills/smg-live-relay/
 ```
-
-两种方式都会把 relay 服务代码一并装进 skill,安装即用。
 
 ### 前置条件
 
