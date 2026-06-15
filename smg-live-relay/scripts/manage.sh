@@ -49,7 +49,17 @@ case "${1:-}" in
       exit 1
     fi
     cd "$RELAY_DIR"
-    [ -d node_modules ] || { echo "首次运行,正在安装依赖 (puppeteer + Chromium,约 150MB)..."; HTTP_PROXY="$INSTALL_PROXY" HTTPS_PROXY="$INSTALL_PROXY" npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }; }
+    if [ ! -d node_modules ]; then
+      echo "首次运行,正在安装依赖 (npm 包)..."
+      HTTP_PROXY="$INSTALL_PROXY" HTTPS_PROXY="$INSTALL_PROXY" PUPPETEER_SKIP_DOWNLOAD=true npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }
+    fi
+    # Chrome 本体:用 puppeteer 单独装(只装完整 Chrome,跳过容易出错的 headless-shell)
+    # 已安装则跳过;否则走代理下载(约 150MB)
+    if [ ! -d "$HOME/.cache/puppeteer/chrome" ]; then
+      echo "首次运行,正在下载 Chromium (约 150MB)..."
+      HTTP_PROXY="$INSTALL_PROXY" HTTPS_PROXY="$INSTALL_PROXY" npx puppeteer browsers install chrome >/dev/null 2>&1 || { echo "❌ Chromium 下载失败,请检查代理/网络"; exit 1; }
+      echo "Chromium 下载完成"
+    fi
     env -u HTTP_PROXY -u HTTPS_PROXY PORT="$PORT" nohup node server.js > "$LOG_FILE" 2>&1 &
     echo $! > "$PID_FILE"
     echo "启动中 (PID $(cat "$PID_FILE")),等待抓流..."
