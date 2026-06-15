@@ -11,6 +11,7 @@
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { networkInterfaces } from 'node:os';
@@ -18,8 +19,18 @@ import { networkInterfaces } from 'node:os';
 import puppeteer from 'puppeteer';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, '..');
-const USERSCRIPT_PATH = join(REPO_ROOT, 'smg_fivestar.user.js');
+// userscript 可能在三处:skill 内 relay/ 目录(自包含安装)、仓库根、或上级目录。
+// 按优先级查找,找到即用。
+const USERSCRIPT_CANDIDATES = [
+  join(__dirname, 'smg_fivestar.user.js'),                 // skill 自包含: relay/ 内
+  join(__dirname, '..', 'smg_fivestar.user.js'),           // 仓库结构: relay/ 的上级
+  join(__dirname, '..', '..', 'smg_fivestar.user.js'),     // 兼容更深层嵌套
+].filter(p => existsSync(p));
+if (USERSCRIPT_CANDIDATES.length === 0) {
+  console.error('找不到 smg_fivestar.user.js,已尝试:', USERSCRIPT_CANDIDATES);
+  process.exit(1);
+}
+const USERSCRIPT_PATH = USERSCRIPT_CANDIDATES[0];
 const TARGET_URL = process.env.TARGET_URL || 'https://live.kankanews.com/huikan?id=10';
 const PORT = Number(process.env.PORT || 8080);
 const CAPTURE_TIMEOUT_MS = Number(process.env.CAPTURE_TIMEOUT_MS || 30000);
