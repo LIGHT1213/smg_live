@@ -1,0 +1,15 @@
+{
+  "name": "smg-live-relay",
+  "version": "1.0.0",
+  "description": "Capture SMGTV/五星体育 live stream via headless browser and re-serve as HLS on the LAN.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "clean": "rm -rf hls/*"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^23.5.0"
+  }
+}

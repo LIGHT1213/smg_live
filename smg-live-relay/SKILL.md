@@ -9,6 +9,9 @@ description: Start, stop, or check status of the local SMGTV/五星体育 live-s
 通过 headless 浏览器中转,以标准 HLS 形式在局域网内播出,任何播放器
 (VLC/IINA/电视/手机)打开一个 m3u8 地址即可观看。
 
+relay 服务代码随 skill 一起分发(skill 内的 `relay/` 子目录),
+安装 skill 后立即可用,无需额外配置。
+
 ## 何时使用
 
 - 用户想**打开/启动**直播:"开五星体育""打开直播""start the live stream"
@@ -20,14 +23,9 @@ description: Start, stop, or check status of the local SMGTV/五星体育 live-s
 
 ## 如何操作
 
-**全部通过管理脚本,不要自己拼命令。** 脚本基于自身位置自动定位 relay 目录,
-两种调用方式都行(任选其一):
+**全部通过管理脚本,不要自己拼命令。** 脚本会自动定位 skill 内的 relay:
 
 ```bash
-# 方式A:直接用仓库里的脚本 (克隆后立即可用)
-bash smg-live-relay/scripts/manage.sh start
-
-# 方式B:已安装到 ~/.codex/skills/smg-live-relay/ 时
 bash ~/.codex/skills/smg-live-relay/scripts/manage.sh start
 ```
 
@@ -40,31 +38,32 @@ bash ~/.codex/skills/smg-live-relay/scripts/manage.sh start
 | 重启 | `... manage.sh restart` |
 | 看日志 | `... manage.sh log` |
 
-脚本会自行处理:首次 npm install、清理残留进程、轮询就绪、输出播放地址。
-若 relay 不在默认位置,用 `RELAY_DIR=/path/to/relay manage.sh start` 覆盖。
+脚本会自行处理:首次 npm install(装 puppeteer + Chromium)、清理残留进程、
+轮询就绪、输出播放地址。
 
 ## 响应用户的要点
 
 1. **启动后**,把脚本输出的播放地址原样告诉用户,例如:
    > 已启动。手机/电脑用 VLC 打开: http://192.168.x.x:8080/live.m3u8
-2. **首次启动**可能要 1-2 分钟(npm install + Chromium 下载);之后启动约 5 秒。
+2. **首次启动**要 1-2 分钟(npm install + 下载 Chromium 约 150MB);之后约 5 秒。
 3. **状态查询**时,脚本会同时探测 m3u8 是否真能访问,据实回报。
 4. **启动失败**:把日志末尾几行附上,并提示用户 token 可能过期、可尝试 restart。
 5. **已运行时再 start**,脚本会幂等返回当前地址,不会重复启动。
 
 ## 换频道
 
-默认是五星体育 (`kankanews.com/huikan?id=10`)。换频道用环境变量:
+默认五星体育 (`kankanews.com/huikan?id=10`)。换频道用环境变量:
+```bash
+TARGET_URL='https://live.kankanews.com/huikan?id=8' \
+  bash ~/.codex/skills/smg-live-relay/scripts/manage.sh restart
 ```
-TARGET_URL='https://live.kankanews.com/huikan?id=8' bash smg-live-relay/scripts/manage.sh restart
-```
-常见 id:10=五星体育,8=上视新闻,具体以 kankanews 实际页面为准。
+常见 id:10=五星体育,8=上视新闻(以 kankanews 实际页面为准)。
 
 ## 安装
 
 ### 方式一:用 Codex 官方 skill-installer(推荐)
 
-在 Codex 里直接说 "安装 smg-live-relay skill",或运行:
+在 Codex 里说 "安装 smg-live-relay skill",或运行:
 
 ```bash
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --repo LIGHT1213/smg_live --path smg-live-relay
@@ -78,20 +77,24 @@ python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-githu
 cp -R smg-live-relay/ ~/.codex/skills/smg-live-relay/
 ```
 
-> 注意:安装后需确认 relay 服务代码在 skill 能找到的位置。
-> 默认查找顺序:环境变量 `RELAY_DIR` → 仓库结构 → fallback。
-> 本机默认 fallback 路径在 manage.sh 顶部 `RELAY_DIR_FALLBACK`,按需修改。
+两种方式都会把 relay 服务代码一并装进 skill,安装即用。
+
+### 前置条件
+
+- macOS(Apple Silicon 或 Intel)
+- Node.js ≥ 18
+- 不需要 ffmpeg、不需要代理(kankanews 是国内 CDN,直连)
 
 ## 外网访问(可选,仅在用户明确要求时提供)
 
 relay 默认只在局域网内可用。要在家庭网络之外观看,推荐用 Tailscale
 (免费、无需公网 IP、无需路由器配置):在 Mac 和手机都装 Tailscale 并登录
-同一账号,之后用 Mac 的 Tailscale IP 替换局域网 IP 即可。配置细节让用户
-自行查阅 tailscale.com,本 skill 不负责安装。
+同一账号,之后用 Mac 的 Tailscale IP 替换局域网 IP 即可。
+配置细节让用户自行查阅 tailscale.com,本 skill 不负责安装。
 
 ## 不要做的事
 
-- 不要修改 `relay/` 目录下的 server.js 或 userscript(已验证可用)
+- 不要修改 skill 内 relay/server.js(已验证可用)
 - 不要在启动时设 HTTP_PROXY(国内 CDN 直连,加代理会失败)
 - 不要试图用 ffmpeg 直拉 CDN(TLS 指纹校验,必 403)
 - 不要承诺自动重连或 7×24 稳定(直播 token 会过期,断了需手动 restart)

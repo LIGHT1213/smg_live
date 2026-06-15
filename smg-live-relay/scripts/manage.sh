@@ -2,21 +2,13 @@
 # smg-live-relay 服务管理脚本
 # 用法: manage.sh {start|stop|status|restart|log} [端口]
 #
-# RELAY_DIR 查找顺序:
-#   1. 环境变量 RELAY_DIR (显式指定)
-#   2. 本脚本同级仓库结构 (<repo>/skill/scripts → <repo>/relay)
-#   3. 本机默认安装位置 (见下方 RELAY_DIR_FALLBACK)
+# relay 服务代码在 skill 内部 (../relay),无需额外配置即可用。
+# 如需指向其他位置的 relay,用环境变量 RELAY_DIR 覆盖。
 set -euo pipefail
 
-RELAY_DIR_FALLBACK=""  # 克隆后如不在标准位置,用 RELAY_DIR 环境变量指定
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-_auto_relay_dir() {
-  # 尝试 <script_dir>/../../relay (仓库结构);不存在则回退到 FALLBACK
-  local guess="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)/relay"
-  [ -d "$guess" ] && echo "$guess" || echo "$RELAY_DIR_FALLBACK"
-}
-RELAY_DIR="${RELAY_DIR:-$(_auto_relay_dir)}"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+RELAY_DIR="${RELAY_DIR:-$SKILL_DIR/relay}"
 PID_FILE="$RELAY_DIR/.relay.pid"
 LOG_FILE="$RELAY_DIR/.relay.log"
 PORT="${2:-8080}"
@@ -48,8 +40,12 @@ case "${1:-}" in
       echo "   请用 RELAY_DIR 环境变量指定。"
       exit 1
     fi
+    if [ ! -f "$RELAY_DIR/server.js" ]; then
+      echo "❌ relay 目录中找不到 server.js: $RELAY_DIR"
+      exit 1
+    fi
     cd "$RELAY_DIR"
-    [ -d node_modules ] || { echo "首次运行,正在安装依赖..."; npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }; }
+    [ -d node_modules ] || { echo "首次运行,正在安装依赖 (puppeteer + Chromium,约 150MB)..."; npm install >/dev/null 2>&1 || { echo "❌ npm install 失败"; exit 1; }; }
     env -u HTTP_PROXY -u HTTPS_PROXY PORT="$PORT" nohup node server.js > "$LOG_FILE" 2>&1 &
     echo $! > "$PID_FILE"
     echo "启动中 (PID $(cat "$PID_FILE")),等待抓流..."
@@ -106,7 +102,7 @@ case "${1:-}" in
     echo "用法: $0 {start|stop|status|restart|log} [端口]"
     echo ""
     echo "环境变量:"
-    echo "  RELAY_DIR  指定 relay 目录"
+    echo "  RELAY_DIR  指定 relay 目录 (默认: skill 内的 relay/)"
     exit 1
     ;;
 esac
